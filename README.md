@@ -1,6 +1,13 @@
-# Pratical_Machine_learning_Project
-Coursera Course 
-December 9, 2019
+---
+title: "Prediction Assignment - Coursera"
+author: "Frederick Orndorff"
+date: "12/9/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ## Introduction
 
@@ -35,105 +42,93 @@ The dataset is stored in a comma-separated-value (CSV) file and there
 are a total of 19,622 observations in the training set and the testing
 set includes 20 observations dataset.
 
+```{r}
+#Load Packages and import data
+library(caret); library(randomForest);
+library(rpart); library(rpart.plot)
 
-## Assignment
-
-The goal is to predict the manner in which an individual completed an 
-exercise (the "classe" variable).  Then using the predicition model,
-we will predict 20 different test cases.
-
-## Data Processing
-
-
-### Loading and preprocessing the data
-
-Show any code that is needed to
-
-1. Load the data (i.e. `read.csv()`)
-
-2. Process/transform the data (if necessary) into a format suitable for your analysis
-
-
-### What is mean total number of steps taken per day?
-
-For this part of the assignment, you can ignore the missing values in
-the dataset.
-
-1. Make a histogram of the total number of steps taken each day
-
-2. Calculate and report the **mean** and **median** total number of steps taken per day
-
-
-### What is the average daily activity pattern?
-
-1. Make a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
-
-2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
-
-
-### Imputing missing values
-
-Note that there are a number of days/intervals where there are missing
-values (coded as `NA`). The presence of missing days may introduce
-bias into some calculations or summaries of the data.
-
-1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s)
-
-2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
-
-3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
-
-4. Make a histogram of the total number of steps taken each day and Calculate and report the **mean** and **median** total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
-
-
-### Are there differences in activity patterns between weekdays and weekends?
-
-For this part the `weekdays()` function may be of some help here. Use
-the dataset with the filled-in missing values for this part.
-
-1. Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
-
-1. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). The plot should look something like the following, which was created using **simulated data**:
-
-![Sample panel plot](instructions_fig/sample_panelplot.png) 
-
-
-**Your plot will look different from the one above** because you will
-be using the activity monitor data. Note that the above plot was made
-using the lattice system but you can make the same version of the plot
-using any plotting system you choose.
-
-
-## Submitting the Assignment
-
-To submit the assignment:
-
-1. Commit your completed `PA1_template.Rmd` file to the `master` branch of your git repository (you should already be on the `master` branch unless you created new ones)
-
-2. Commit your `PA1_template.md` and `PA1_template.html` files produced by processing your R markdown file with the `knit2html()` function in R (from the **knitr** package)
-
-3. If your document has figures included (it should) then they should have been placed in the `figure/` directory by default (unless you overrode the default). Add and commit the `figure/` directory to your git repository.
-
-4. Push your `master` branch to GitHub.
-
-5. Submit the URL to your GitHub repository for this assignment on the course web site.
-
-In addition to submitting the URL for your GitHub repository, you will
-need to submit the 40 character SHA-1 hash (as string of numbers from
-0-9 and letters from a-f) that identifies the repository commit that
-contains the version of the files you want to submit. You can do this
-in GitHub by doing the following:
-
-1. Go into your GitHub repository web page for this assignment
-
-2. Click on the "?? commits" link where ?? is the number of commits you have in the repository. For example, if you made a total of 10 commits to this repository, the link should say "10 commits".
-
-3. You will see a list of commits that you have made to this repository. The most recent commit is at the very top. If this represents the version of the files you want to submit, then just click the "copy to clipboard" button on the right hand side that should appear when you hover over the SHA-1 hash. Paste this SHA-1 hash into the course web site when you submit your assignment. If you don't want to use the most recent commit, then go down and find the commit you want and copy the SHA-1 hash.
-
-A valid submission will look something like (this is just an **example**!)
-
-```r
-https://github.com/rdpeng/RepData_PeerAssessment1
-
-7c376cc5447f11537f8740af8e07d6facc3d9645
+#Make sure the working directory is where the *.csv files are located
+training <- read.csv("pml-training.csv", na.strings = c("NA", ""))
+testing <- read.csv("pml-testing.csv", na.strings = c("NA", ""))
 ```
+
+## Data Processing (Cleaning)
+Before we start the prediction we should ensure the data is not missing any values and is in the correct format.
+
+```{r}
+training <- training [, colSums(is.na(training)) == 0]
+testing <- testing [, colSums(is.na(testing)) == 0]
+```
+
+# Create a validation set
+
+I am unsure if there is a need for a validation set - but this is what was taught in class, so the code
+below creates a validation set of 30 percent of the testing set.
+
+```{r}
+set.seed(1111)
+training_2 <- createDataPartition(training$classe, p = 0.7, list = FALSE)
+train_set <- training[training_2,]
+validation_set <- training[-training_2,]
+```
+
+## Prediction Models
+
+Lets start with classification trees and random forests to predict the class of exercise.
+
+# Classification Trees
+```{r}
+class_train <- trainControl(method = 'cv', number = 10)
+fit_rpart <- train(classe ~., data = train_set, method = 'rpart')
+print(fit_rpart, digits = 3)
+```
+
+Lets see a plot:
+
+```{r}
+library(rattle)
+fancyRpartPlot(fit_rpart$finalModel)
+```
+
+# Confusion Matrix:
+
+```{r}
+predict_rpart <- predict(fit_rpart, validation_set)
+print (cm_rpart <- confusionMatrix(validation_set$classe, predict_rpart))
+```
+
+```{r}
+print (acc_rpart <- cm_rpart$overall[1])
+```
+
+A 66% accuracy is alright - but can we do better with Random Forests??
+
+## Random Forests
+
+```{r}
+#This takes too long
+#fit_rf <- train(classe ~., data = train_set, method = 'rf')
+#lets try something else
+fit_rf <- randomForest(classe ~., data = train_set)
+print (fit_rf, digits = 3)
+```
+WOW - that took FOREVER to finish... maybe it is time to upgrade the computer??
+
+Lets check the confusion matrix and the overall accuracy:
+
+```{r}
+predict_rf <- predict(fit_rf, validation_set)
+print (confusion_rf <- confusionMatrix(validation_set$classe, predict_rf))
+print (accuracy_rf <- confusion_rf$overall[1])
+```
+
+It seems like the random forests provides a better prediction accuracy -- but it cost me may minutes of
+surfing the web -- waiting for the computations to be completed.  The last step is to test the model(s)
+on the test set.
+
+## Final Prediction
+```{r}
+Final_pred <- predict(fit_rf, data = testing)
+Final_pred
+```
+
