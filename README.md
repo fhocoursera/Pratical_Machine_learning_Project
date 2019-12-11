@@ -2,7 +2,9 @@
 title: "Prediction Assignment - Coursera"
 author: "Frederick Orndorff"
 date: "12/9/2019"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -60,6 +62,15 @@ training <- training [, colSums(is.na(training)) == 0]
 testing <- testing [, colSums(is.na(testing)) == 0]
 ```
 
+It looks like the first seven columns are not needed - I am going to delete and hopefully it speeds up the analysis.
+Also this might provide cleaner outputs.
+
+```{r}
+training <- training [, -c(1:7)]
+testing <- testing [, -c(1:7)]
+```
+
+
 # Create a validation set
 
 I am unsure if there is a need for a validation set - but this is what was taught in class, so the code
@@ -101,13 +112,13 @@ print (cm_rpart <- confusionMatrix(validation_set$classe, predict_rpart))
 print (acc_rpart <- cm_rpart$overall[1])
 ```
 
-A 66% accuracy is alright - but can we do better with Random Forests??
+A 49.8% accuracy is pretty bad; we do better with Random Forests!!
 
 ## Random Forests
 
 ```{r}
 #This takes too long
-#fit_rf <- train(classe ~., data = train_set, method = 'rf')
+#fit_rf <- train(classe ~., data = train_set, method = 'parRF')
 #lets try something else
 fit_rf <- randomForest(classe ~., data = train_set)
 print (fit_rf, digits = 3)
@@ -128,7 +139,6 @@ on the test set.
 
 ## Final Prediction
 ```{r}
-Final_pred <- predict(fit_rf, data = testing)
-Final_pred
-```
+(predict(fit_rf, testing))
 
+```
