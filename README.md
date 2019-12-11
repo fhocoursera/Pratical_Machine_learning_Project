@@ -112,7 +112,8 @@ print (cm_rpart <- confusionMatrix(validation_set$classe, predict_rpart))
 print (acc_rpart <- cm_rpart$overall[1])
 ```
 
-A 49.8% accuracy is pretty bad; we do better with Random Forests!!
+A 49.8% accuracy is pretty bad.  The out of sample error rate is 1-0.498 or 0.502.  We could use cross validation and maybe a Random 
+Forest would be a better predictor!!
 
 ## Random Forests
 
@@ -133,8 +134,8 @@ print (confusion_rf <- confusionMatrix(validation_set$classe, predict_rf))
 print (accuracy_rf <- confusion_rf$overall[1])
 ```
 
-It seems like the random forests provides a better prediction accuracy -- but it cost me may minutes of
-surfing the web -- waiting for the computations to be completed.  The last step is to test the model(s)
+It seems like the random forests provides a better prediction accuracy at 99.5% (out-of-sample error rate of 0.005) -- but it cost me may 
+minutes of surfing the web -- waiting for the computations to be completed.  The last step is to test the model(s)
 on the test set.
 
 ## Final Prediction
